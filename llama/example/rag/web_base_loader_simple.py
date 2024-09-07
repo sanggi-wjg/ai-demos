@@ -1,19 +1,21 @@
 import bs4
-from langchain.chains.summarize import load_summarize_chain
 from langchain_community.chat_models import ChatOllama
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_text_splitters import CharacterTextSplitter
+from langchain_core.prompts import ChatPromptTemplate
 
 llama = ChatOllama(model="llama3.1", temparature=0)
 
 
 def naver_news():
-    url1 = "https://n.news.naver.com/mnews/article/015/0005030964"
+    urls = (
+        "https://n.news.naver.com/mnews/article/050/0000079549",
+        "https://n.news.naver.com/mnews/article/050/0000079544",
+        "https://n.news.naver.com/mnews/article/015/0005030964",
+    )
 
     loader = WebBaseLoader(
-        web_paths=(url1,),
+        web_paths=urls,
         bs_kwargs=dict(
             parse_only=bs4.SoupStrainer("article", attrs={"id": ["dic_area"]}),
         ),
@@ -21,22 +23,36 @@ def naver_news():
     docs = loader.load()
 
     template = """
-    다음 기사를 한글로 요약 해주세요.
-    {article}
-    
-    응답은 반드시 아래의 JSON 형식을 따라 주세요: 
-    {{
-        "summary": "전체 내용 요약 (50단어 이내)",
-        "key_points": [
-            "핵심 포인트 1 (20단어 이내)",
-            "핵심 포인트 2 (20단어 이내)",
-            "핵심 포인트 3 (20단어 이내)",
-            "핵심 포인트 4 (20단어 이내)",
-            "핵심 포인트 5 (20단어 이내)",
-            ...
-        ],
-        "tags": ["태그1", "태그2", "태그3", ...]
-    }}
+# Instruction
+당신은 경제 기사 요약의 전문가 입니다.
+
+아래의 기사를 읽고, 다음 지침에 따라 요약해 주세요:
+1. 전체 내용을 50단어 이내로 요약한 'summary' 필드를 작성해 주세요.
+2. 핵심 내용을 간결하게 정리해서 'key_points' 필드에 작성해 주세요.
+3. 각 key_points 내용은 한 문장으로, 20단어를 넘지 않도록 해주세요.
+4. 텍스트의 핵심 키워드와 관련된 단어나 개념을 10개 내외로 'tags' 필드에 추가해 주세요.
+5. 전문 용어가 있다면 간단히 설명을 덧붙여 주세요.
+6. 숫자나 통계가 있다면 반드시 포함시켜 주세요.
+7. 요약은 객관적이고 중립적인 톤을 유지해 주세요.
+
+응답은 반드시 아래의 JSON 형식을 따라 주세요: 
+{{
+    "summary": "전체 내용 요약 (50단어 이내)",
+    "key_points": [
+        "핵심 포인트 1 (20단어 이내)",
+        "핵심 포인트 2 (20단어 이내)",
+        "핵심 포인트 3 (20단어 이내)",
+        "핵심 포인트 4 (20단어 이내)",
+        "핵심 포인트 5 (20단어 이내)",
+        ...
+    ],
+    "tags": ["태그1", "태그2", "태그3", ...]
+}}
+
+# Input
+{article}
+
+위 지침에 따라 JSON 형식으로 요약해 주세요.
     """
 
     prompt = ChatPromptTemplate.from_template(template)
