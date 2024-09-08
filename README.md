@@ -5,7 +5,15 @@
 ```shell
 pip install langchain langchain-community beautifulsoup4
 pip install transformers pypdf black
+...
 ```
+
+
+## 헷지
+ollama는 아직 pydantic model을 사용 부분이 실험 코드로만 있음 따라서 복붙해와서
+해결하는 방향으로 진행 (https://github.com/langchain-ai/langchain/discussions/23079)
+
+
 
 ## Ref
 
