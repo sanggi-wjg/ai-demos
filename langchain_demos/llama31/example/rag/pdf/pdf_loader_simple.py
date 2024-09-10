@@ -1,7 +1,7 @@
 import os
 
 from langchain_community.chat_models import ChatOllama
-from langchain_community.document_loaders import PyPDFLoader, UnstructuredPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, UnstructuredPDFLoader, PDFMinerLoader
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
@@ -10,10 +10,10 @@ llama = ChatOllama(model="llama3.1", temparature=0)
 pdf_filepath = os.path.join("../data", "SK_ESG_2023.pdf")
 # pdf_filepath = os.path.join("../data", "정유화학에너지.pdf")
 
-loader = PyPDFLoader(pdf_filepath)
+# loader = PyPDFLoader(pdf_filepath)
+loader = PDFMinerLoader(pdf_filepath)
 pages = loader.load()
 pdf_content = "\n".join([page.page_content for page in pages])
-
 
 template = """
 # Instruction

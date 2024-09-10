@@ -5,13 +5,15 @@
 ### Install
 
 ```shell
-pip install langchain langchain-community beautifulsoup4
-pip install transformers pypdf black
+pip install langchain langchain-community langchain-ollama beautifulsoup4
+pip install transformers pdfminer.six pypdf black
 ```
 
 ### 헷지
 
-ollama는 아직 pydantic model을 사용 부분이 실험 코드로만 있음 따라서 복붙해와서 해결하는 방향으로 진행 (https://github.com/langchain-ai/langchain/discussions/23079)
+pydantic 사용시에는 `from langchain_ollama import ChatOllama`을 사용
+
+![img.png](img.png)
 
 ### Ref
 
