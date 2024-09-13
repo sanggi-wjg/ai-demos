@@ -1,11 +1,11 @@
 from langchain.chains.conversation.base import ConversationChain
 from langchain.globals import set_debug
 from langchain.memory import ConversationBufferMemory
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_ollama import ChatOllama
 
-set_debug(True)
 
-memory = ConversationBufferMemory()
+memory = ConversationBufferMemory()  # 이 메모리는 메시지를 저장한 다음 변수에 메시지를 추출할 수 있게 해줍니다.
 memory.save_context(
     inputs={
         "human": "핏펫몰 주문 상태는 어떻게 되나요?",
@@ -40,7 +40,7 @@ memory.save_context(
 )
 memory.save_context(
     inputs={
-        "human": "어드민 유저로 권한 부여시 주의할 점이 있나요?",
+        "human": "어드민 유저 권한 부여시 주의할 점이 있나요?",
     },
     outputs={
         "ai": """
@@ -78,14 +78,29 @@ memory.save_context(
 )
 # a = memory.load_memory_variables({})
 
+template = """
+# Instruction:
+The following is a friendly conversation between a human and an AI. 
+The AI is talkative and provides lots of specific details from its context. 
+If the AI does not know the answer to a question, it truthfully says it does not know. 
+
+# IMPORTANT INSTRUCTION:
+**The AI ONLY uses information contained in the "Relevant Information" section and does not hallucinate.**
+
+# Relevant Information:
+{history}
+
+# Conversation:
+Human: {input}
+AI:"""
+prompt = PromptTemplate(input_variables=["history", "input"], template=template)
 
 llm = ChatOllama(model="llama3.1", temperature=0)
-chain = ConversationChain(llm=llm, memory=memory)
+chain = ConversationChain(llm=llm, memory=memory, prompt=prompt)
+
+# set_debug(True)
 
 while True:
-    user_input = input("입력: ")
+    user_input = input("질문 입력: ")
     resp = chain.predict(input=user_input)
     print(resp)
-
-    # resp2 = chain.invoke(user_input)
-    # print(resp2)

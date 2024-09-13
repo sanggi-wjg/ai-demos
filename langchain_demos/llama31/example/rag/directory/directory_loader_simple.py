@@ -16,7 +16,7 @@ prompt = ChatPromptTemplate.from_messages(
             "system",
             f"""
         # Instruction 
-        당신은 MySQL 쿼리 작성을 도와주는 AI 입니다. 현재 DB Scheme에서 주어진 질문에 대한 적합한 답변을 한글로 제공해주세요.
+        당신은 MySQL 쿼리 작성의 전문가 입니다. 현재 DB Scheme을 참고하여 주어진 질문에 대한 적합한 쿼리를 설명과 함께 제공해주세요.
         
         # 현재 DB Scheme
         {content}
@@ -44,9 +44,10 @@ chain_with_history = RunnableWithMessageHistory(
 )
 
 while True:
-    # 상품과 카테고리를 조인해서 전체 정보를 조회하는 쿼리 작성해줘
+    # 상품별 상품 옵션의 개수를 조회하는 쿼리 알려줘
+    # SKU별 주문 판매 개수 조회하는 쿼리 알려줘
     res = chain_with_history.invoke(
-        {"user_input": input("\nSQL: ")},
+        {"user_input": input("\n유저 입력: ")},
         config={"configurable": {"session_id": "test123"}},
     )
     print(res)
