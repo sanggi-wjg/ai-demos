@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
 llama = ChatOllama(model="llama3.1", temparature=0)
-set_llm_cache(InMemoryCache())
+# set_llm_cache(InMemoryCache())
 set_llm_cache(SQLiteCache(database_path="llm_cache.db"))
 
 # set_debug(True)

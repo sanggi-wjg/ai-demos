@@ -13,7 +13,10 @@ prompt = ChatPromptTemplate.from_messages(
             "system",
             "You are a helpful AI assistant. Please answer the user's questions kindly with emoticons. Answer me in Korean no matter what.",
         ),
-        ("user", "{user_input}"),
+        (
+            "human",
+            "{user_input}",
+        ),
     ]
 )
 

@@ -2,18 +2,27 @@
 
 ## Langchain
 
-### Install
+### Common Install
 
 ```shell
 pip install langchain langchain-community langchain-ollama beautifulsoup4
-pip install transformers pdfminer.six pypdf black
+pip install transformers pdfminer.six pypdf black unstructured
 ```
 
-### 헷지
+### LangServe
+
+```shell
+pip install "langserve[server]" langchain-cli
+
+```
+
+### 라마 헷지
 
 pydantic 사용시에는 `from langchain_ollama import ChatOllama`을 사용
 
-![img.png](img.png)
+### PDF 라이브러리 적합도
+
+![img.png](.docs/img.png)
 
 ### Ref
 
