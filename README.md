@@ -6,7 +6,10 @@
 
 ```shell
 pip install langchain langchain-community langchain-ollama beautifulsoup4
-pip install transformers pdfminer.six pypdf black unstructured
+pip install python-dotenv transformers pdfminer.six pypdf black unstructured
+
+# agent web search
+pip install tavily-python
 ```
 
 ### LangServe
@@ -34,6 +37,9 @@ pydantic 사용시에는 `from langchain_ollama import ChatOllama`을 사용
 ### PDF 라이브러리 적합도
 
 ![img.png](.docs/img.png)
+
+### API
+* [tavily](https://app.tavily.com/home)
 
 ### Ref
 

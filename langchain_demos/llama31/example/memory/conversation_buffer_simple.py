@@ -104,3 +104,5 @@ while True:
     user_input = input("질문 입력: ")
     resp = chain.predict(input=user_input)
     print(resp)
+
+    memory.save_context(inputs={"human": user_input}, outputs={"ai": resp})
