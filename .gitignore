@@ -3,3 +3,6 @@
 *.db
 .demoapp/
 .env
+**/.vector
+**/.store
+**/.cache
