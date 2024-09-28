@@ -4,8 +4,7 @@ from dotenv import load_dotenv
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.retrievers import EnsembleRetriever
 from langchain.storage import LocalFileStore
-from langchain_community.document_loaders import DirectoryLoader, ConfluenceLoader, NotionDBLoader
-from langchain_community.document_loaders.confluence import ContentFormat
+from langchain_community.document_loaders import DirectoryLoader
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
@@ -16,9 +15,11 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from langchain_demos.utils.dev import cyan
+from langchain_demos.utils.dev import cyan, blue, green
 
 load_dotenv()
+# set_verbose(True)
+set_debug(False)
 
 JIRA_SPACE_PO = os.getenv("JIRA_SPACE_PO")
 JIRA_SPACE_DEV = os.getenv("JIRA_SPACE_DEV")
@@ -34,7 +35,7 @@ def load_documents():
         chunk_overlap=30,
         length_function=len,
         is_separator_regex=False,
-        # separators=["\n\n"],
+        separators=["\n\n"],
     )
 
     directory_loader = DirectoryLoader(
@@ -117,14 +118,19 @@ template = """
 prompt = PromptTemplate.from_template(template)
 chain = {"docs_context": ensemble_retriever, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
 
-set_debug(False)
-
 while True:
     user_input = input("\n유저 입력: ")
 
-    cyan(f"[BM25] {bm25_retriever.invoke(user_input)}")
-    cyan(f"[Chroma] {chroma_retriever.invoke(user_input)}")
-    cyan(f"[Ensemble] {ensemble_retriever.invoke(user_input)}")
+    bm25_search_docs = bm25_retriever.invoke(user_input)
+    chroma_search_docs = chroma_retriever.invoke(user_input)
+    ensemble_search_docs = ensemble_retriever.invoke(user_input)
+
+    for doc in bm25_search_docs:
+        cyan(f"BM25: {doc}")
+    for doc in chroma_search_docs:
+        blue(f"Chroma: {doc}")
+    for doc in ensemble_search_docs:
+        green(f"Ensemble: {doc}")
 
     for token in chain.stream(user_input):
         print(token, end="", flush=True)
