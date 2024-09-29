@@ -1,30 +1,13 @@
-import os
-
-from dotenv import load_dotenv
 from langchain.agents import (
-    Tool,
     create_react_agent,
     AgentExecutor,
 )
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.tools import TavilySearchResults
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import create_retriever_tool
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-load_dotenv()
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-
-
-def get_search_tool():
-    search = TavilySearchResults(k=5)
-    return Tool(
-        name="demo",
-        func=search.invoke,
-        description="Tavily Search",
-    )
 
 
 def get_pdf_tool():
@@ -36,7 +19,7 @@ def get_pdf_tool():
     vector_db = Chroma.from_documents(
         documents=docs,
         embedding=embeddings,
-        persist_directory=".agent_pdf.vector",
+        persist_directory=".vector.agent_pdf",
     )
     retriever = vector_db.as_retriever()
 
