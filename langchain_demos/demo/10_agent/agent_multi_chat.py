@@ -168,9 +168,38 @@ disagree_retriever_tool = create_my_tool(
 )
 
 
-the_agents = {
+names = {
     "의사 증원 찬성론자": [agree_retriever_tool, search_tool],
     "의사 증원 반대": [disagree_retriever_tool, search_tool],
 }
 topic = "대한민국 의학 대학교 증원 확대가 필요할까요?"
 word_limit = 50
+
+conversation_description = f"""Here is the topic of conversation: {topic}. 
+The participants are: {', '.join(names.keys())}"""
+
+agent_descriptor_system_message = SystemMessage(
+    content="You can add detail to the description of the conversation participant."
+)
+
+
+def generate_agent_description(name):
+    agent_specifier_prompt = [
+        agent_descriptor_system_message,
+        HumanMessage(
+            content=f"""
+            {conversation_description}
+            Please reply with a description of {name}, in {word_limit} words or less in expert tone. 
+            Speak directly to {name}.
+            Give them a point of view.
+            Do not add anything else. Answer in KOREAN.
+            """
+        ),
+    ]
+
+    agent_description = llama(agent_specifier_prompt).content
+    return agent_description
+
+
+agent_descriptions = {name: generate_agent_description(name) for name in names}
+# agents = [DialogueAgentWithTools(name=name, agent_descriptions, llm=llama, tools=names) for (name, tool), agent_description in zip(names, agent_descriptions)]
