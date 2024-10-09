@@ -15,3 +15,7 @@ add_routes(app, conversation_chain, path="/demo")
 ```
 
 http://localhost:8000/demo/playground/ 접속
+
+## Ref
+
+* https://python.langchain.com/docs/langserve

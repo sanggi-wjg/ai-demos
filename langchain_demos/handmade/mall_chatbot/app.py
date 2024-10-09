@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.retrievers import EnsembleRetriever
 from langchain.storage import LocalFileStore
-from langchain_community.document_loaders import DirectoryLoader
+from langchain_community.document_loaders import DirectoryLoader, ConfluenceLoader
+from langchain_community.document_loaders.confluence import ContentFormat
 from langchain_community.retrievers import BM25Retriever
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
