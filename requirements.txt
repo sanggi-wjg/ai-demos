@@ -101,7 +101,7 @@ langchain-experimental==0.3.2
 langchain-ollama==0.2.0
 langchain-text-splitters==0.3.0
 langdetect==1.0.9
-langserve==0.2.3
+langserve==0.3.0
 langsmith==0.1.129
 libcst==1.4.0
 lxml==5.3.0
