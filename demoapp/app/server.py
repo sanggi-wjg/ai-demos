@@ -17,6 +17,7 @@ add_routes(app, chains.ChatOllama(model="benedict/linkbricks-llama3.1-korean:8b"
 # add_routes(app, chains.llama_32, path="/llama-32")
 
 add_routes(app, chains.simple_chain(), path="/simple")
+add_routes(app, chains.simple_groq_chain(), path="/simple-groq")
 add_routes(app, chains.joke_of_topic_chain(), path="/joke")
 
 add_routes(app, chains.simple_rag_chain(), path="/simple-rag")

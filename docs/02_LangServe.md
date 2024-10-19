@@ -19,3 +19,4 @@ http://localhost:8000/demo/playground/ 접속
 ## Ref
 
 * https://python.langchain.com/docs/langserve
+* https://github.com/langchain-ai/langserve/blob/main/examples/chat_with_persistence/server.py
