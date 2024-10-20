@@ -20,7 +20,8 @@ add_routes(app, chains.simple_chain(), path="/simple")
 add_routes(app, chains.simple_groq_chain(), path="/simple-groq")
 add_routes(app, chains.joke_of_topic_chain(), path="/joke")
 
-add_routes(app, chains.simple_rag_chain(), path="/simple-rag")
+add_routes(app, chains.simple_rag_chain(), path="/rag")
+add_routes(app, chains.simple_story_chain(), path="/story")
 
 if __name__ == "__main__":
     import uvicorn
