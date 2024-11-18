@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from dotenv import load_dotenv
 from langchain.embeddings import CacheBackedEmbeddings
@@ -31,9 +32,50 @@ JIRA_API_URL = os.getenv("JIRA_API_URL")
 JIRA_API_KEY = os.getenv("JIRA_API_KEY")
 JIRA_CONFLUENCE_API_URL = f"{JIRA_API_URL}/wiki"
 
+DOCUMENTS_CACHE_PATH = "./docs_bot_2.pkl"
 
-@caching("./docs.bot.pkl")
-def load_documents() -> list[Document]:
+
+def get_one_pager_documents_ids_in_confluence() -> List[str]:
+    return [
+        "107151658",
+        "107282434",
+        "158728193",
+        "158662658",
+        "158662720",
+        "149127169",
+        "158728317",
+        "151519233",
+        "145850369",
+        "194871297",
+        "204408489",
+        "203915521",
+        "203915433",
+        "227409922",
+        "193101949",
+        "234291201",
+        "204408559",
+        "211550209",
+        "166166529",
+        "203915265",
+        "203915349",
+        "241172481",
+        "239894529",
+        "241795073",
+        "241860609",
+        "240123906",
+        "210370561",
+        "253067265",
+        "253034730",
+        "253034497",
+        "235208705",
+        "235143253",
+        "253034630",
+        "255262721",
+    ]
+
+
+@caching(DOCUMENTS_CACHE_PATH)
+def load_documents() -> List[Document]:
     recursive_text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
         chunk_overlap=100,
@@ -41,17 +83,18 @@ def load_documents() -> list[Document]:
         is_separator_regex=False,
         separators=["\n\n"],
     )
-
+    # space_key, page_ids 는 둘중에 하나만 작동함
     confluence_loader = ConfluenceLoader(
         url=JIRA_CONFLUENCE_API_URL,
         api_key=JIRA_API_KEY,
         username=JIRA_USERNAME,
-        space_key=JIRA_SPACE_PO,
         content_format=ContentFormat.STORAGE,
         limit=10,
         max_pages=1000,
         keep_markdown_format=False,
         keep_newlines=False,
+        # space_key=JIRA_SPACE_PO,
+        page_ids=get_one_pager_documents_ids_in_confluence(),
     )
     confluence_docs = recursive_text_splitter.split_documents(
         [doc for doc in confluence_loader.load() if doc.page_content != ""]
@@ -64,14 +107,14 @@ def get_vector_db() -> Chroma:
     store_path = LocalFileStore(".store.bot")
 
     # embeddings = OllamaEmbeddings(model="mxbai-embed-large")
-    embeddings = OllamaEmbeddings(model="bge-m3:latest")
+    embeddings = OllamaEmbeddings(model="bge-m3")
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
         underlying_embeddings=embeddings,
         document_embedding_cache=store_path,
         namespace=embeddings.model,
     )
 
-    if not os.path.exists(chroma_path):
+    if not os.path.exists(DOCUMENTS_CACHE_PATH):
         db = Chroma.from_documents(
             documents=load_documents(),
             embedding=cached_embeddings,
@@ -91,16 +134,16 @@ def get_retriever() -> EnsembleRetriever:
     bm25_retriever = BM25Retriever.from_documents(
         load_documents(),
         search_kwargs={
-            "k": 10,
+            "k": 3,
         },
     )
     vector_retriever = vector_db.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": 10,
-            "fetch_k": 20,  # MMR 초기 후보군 크기
-            "lambda_mult": 0.7,  # 다양성, 관련성 사이의 균형 조정 (0.5-0.8 범위 추천)
-            "score_threshold": 0.8,  # 유사도 점수가 0.8 이상인 문서만 반환
+            "k": 3,
+            # "fetch_k": 5,  # MMR 초기 후보군 크기
+            # "lambda_mult": 0.8,  # 다양성, 관련성 사이의 균형 조정 (0.5-0.8 범위 추천)
+            # "score_threshold": 0.8,  # 유사도 점수가 0.8 이상인 문서만 반환
             # "filter": {"metadata_field": "desired_value"},  # 메타 데이터 기반 필터링
         },
     )
@@ -110,40 +153,62 @@ def get_retriever() -> EnsembleRetriever:
     )
 
 
-llm = ChatOllama(model="llama3.1", temparature=0)
-# llm = ChatGroq(
-#     model="llama-3.1-70b-versatile",
-#     temperature=0,
-#     max_tokens=None,
-#     max_retries=2,
-#     timeout=None,
-# )
-retriever = get_retriever()
+def main():
+    llm = ChatOllama(model="llama3.1", temparature=0)
+    # llm = ChatGroq(
+    #     model="llama-3.1-70b-versatile",
+    #     temperature=0,
+    #     max_tokens=None,
+    #     max_retries=2,
+    #     timeout=None,
+    # )
+    retriever = get_retriever()
 
-prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-# Instruction:
-당신은 핏펫 회사 직원들을 위한 내부 문서와 정책을 잘 이해하고 있는 도우미 입니다.
-Documents들을 기반으로 주어진 질문에 대해 정확하고 상세한 답변과 정보에 대한 출처도 같이 알려주세요. 
-만약 모르는 정보라면 `모르는 정보 입니다.`라고 답변해주세요.
-PLEASE ENSURE THAT ALL ANSWERS ARE KOREAN!
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """
+    # Instruction:
+    당신은 핏펫 회사 직원들을 위한 내부 문서와 정책을 잘 이해하고 있는 도우미 입니다. 
+    
+    주어진 질문에 대해 정확하고 상세한 답변을 해주는 역할을 가지고 있습니다. 다음 지침을 따라 답변해주세요:
+    - 반드시 Documents들을 기반으로 질문에 대해서 답변을 해야합니다.
+    - 전체 내용을 50단어 이내로 요약한 '요약' 필드를 작성해 주세요.
+    - 핵심 내용들을 간결하게 정리해서 '키 포인트' 필드에 작성해 주세요.
+    - metadata 정보에 대한 `출처` 필드를 작성해 주세요.
+    - 만약 모르는 정보라면 `모르는 정보 입니다.`라고 답변 해주세요. 
+    - 모든 답변은 한글이어야 합니다.
+    - 요약은 객관적이고 중립성을 유지해주세요.
+    
+    응답은 반드시 아래 형식을 따라 주세요:
+    요약: "전체 내용 요약 (50단어 이내)"
+    키 포인트:
+      - "핵심 포인트 1" 
+      - "핵심 포인트 2"
+      - "핵심 포인트 3"
+      ...
+    출처:
+      - "URL of Document"
+      - "URL of Document"
+     
+    # Documents: 
+    {documents_context}""".strip(),
+            ),
+            ("human", "# Question: {question}"),
+        ]
+    )
+    chain = {"documents_context": retriever, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
 
-# Documents: 
-{documents_context}""".strip(),
-        ),
-        ("human", "# Question: {question}"),
-    ]
-)
-chain = {"documents_context": retriever, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
+    while True:
+        user_input = input("\n유저 입력: ")
 
-while True:
-    user_input = input("\n유저 입력: ")
+        for found in retriever.invoke(user_input):
+            green(found.page_content)
 
-    for found in retriever.invoke(user_input):
-        green(found.page_content)
+        for token in chain.stream(user_input):
+            print(token, end="", flush=True)
 
-    for token in chain.stream(user_input):
-        print(token, end="", flush=True)
+
+if __name__ == "__main__":
+    main()
