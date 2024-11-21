@@ -29,7 +29,7 @@ def _session_of_chat_factory(
     if not os.path.exists(base_dir):
         os.mkdir(base_dir)
 
-    persist_directory = os.path.join(base_dir, session_id, '.json')
+    persist_directory = os.path.join(base_dir, f'${session_id}.json')
     chat_history = FileChatMessageHistory(persist_directory)
     return chat_history
 

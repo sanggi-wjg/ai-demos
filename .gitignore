@@ -4,8 +4,9 @@
 .demoapp/
 .env
 **/.vector
-**/.vector.*
+**/.vector*
 **/.store
+**/.store*
 **/.cache
 **/.chat.history
 **/*.pkl
