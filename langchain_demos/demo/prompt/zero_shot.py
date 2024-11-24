@@ -1,4 +1,4 @@
-from util import simple_chat
+from simple_func import simple_chat
 
 
 user_input = """

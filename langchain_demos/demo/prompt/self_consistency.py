@@ -1,4 +1,4 @@
-from util import simple_chat_with_history
+from simple_func import simple_chat_with_history
 
 """
 현재 거주하고 있는 오피스텔의 월세는 50만원 입니다. 집주인이 추가 비용으로 관리비 15만원을 입금하라고 합니다. 오피스텔 거주에 소요되는 비용은 얼마인가요?

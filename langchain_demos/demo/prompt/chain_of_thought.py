@@ -1,4 +1,4 @@
-from util import simple_chat
+from simple_func import simple_chat
 
 user_input = """
 본부대에서는 영점 사격 훈련을 위해 탄약 총 1000발을 사격장으로 준비했다. 
