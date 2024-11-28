@@ -27,7 +27,6 @@ search_tool = Tool(
 tools = [repl_tool, search_tool]
 
 template = """Answer the following questions as best you can. You have access to the following tools.
-    **답변은 꼭 한글로 해주세요!**
     
     {tools}
     

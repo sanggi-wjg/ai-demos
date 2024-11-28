@@ -1,3 +1,4 @@
+import uuid
 from math import factorial
 
 from langchain.agents import create_react_agent, AgentExecutor
@@ -82,6 +83,6 @@ user_input = input("유저 입력:")
 
 for token in math_agent.stream(
     {"input": user_input},
-    config={"configurable": {"session_id": "math"}},
+    config={"configurable": {"session_id": f"{uuid.uuid4()}"}},
 ):
     print(token, end="", flush=True)

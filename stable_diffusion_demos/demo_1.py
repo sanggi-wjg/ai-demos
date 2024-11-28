@@ -1,14 +1,17 @@
 import os
-import time
 import uuid
 from datetime import datetime
 
 import torch
-from diffusers import StableDiffusion3Pipeline, DPMSolverMultistepScheduler
+from diffusers import StableDiffusion3Pipeline
 from dotenv import load_dotenv
 
 load_dotenv()
 HUGGING_FACE_ACCESS_TOKEN = os.getenv("HUGGING_FACE_ACCESS_TOKEN")
+
+"""
+https://prompthero.com/stable-diffusion-cartoon-prompts
+"""
 
 # torch.backends.mps.enable_fallback_implementations = True
 print(f"Starting inference... {datetime.now()}")
@@ -25,11 +28,9 @@ pipe = StableDiffusion3Pipeline.from_pretrained(
 pipe = pipe.to("mps")  # cuda
 # pipe.enable_attention_slicing()
 
-# prompt = "A capybara holding a sign that reads Hello World"
-# prompt = "The man is shooting a rifle at the computer in front of him"
-# prompt = "a cinematic film still, a military combat Mecha, in the middle of snowfield in cold battlefield, lonely mood, cinematic lighting"
+# prompt = "A hamster holding a sign that reads Hello World"
 # prompt = "happy retriever with smile in the snow"
-prompt = "A Russian Blue cat sitting on a chair in front of a laptop, typing or programming with a focused expression. The cat is in a cozy indoor setting with a wooden desk, a coffee cup beside the laptop, and a soft light illuminating the scene"
+prompt = """"Cat's Table", A cartoon in the style of John Tenniel, Punch magazine, 1890"""
 
 image = pipe(
     prompt,
