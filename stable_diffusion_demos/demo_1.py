@@ -30,14 +30,15 @@ pipe = pipe.to("mps")  # cuda
 
 # prompt = "A hamster holding a sign that reads Hello World"
 # prompt = "happy retriever with smile in the snow"
-prompt = """"Cat's Table", A cartoon in the style of John Tenniel, Punch magazine, 1890"""
+# prompt = """"Cat's Table", A cartoon in the style of John Tenniel, Punch magazine, 1890"""
+prompt = "Marylin monroe full-body shot detailed background in a 50th ambiente in a diner"
 
 image = pipe(
     prompt,
     width=512,
     height=512,
-    num_inference_steps=28,
-    guidance_scale=3.5,
+    num_inference_steps=50,
+    guidance_scale=8.0,
 ).images[0]
 image.save(image_filename := os.path.join("images", f"{uuid.uuid4()}.png"))
 print("Image saved to", image_filename, f"Finished inference... {datetime.now()}")

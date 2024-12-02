@@ -32,7 +32,8 @@ JIRA_API_URL = os.getenv("JIRA_API_URL")
 JIRA_API_KEY = os.getenv("JIRA_API_KEY")
 JIRA_CONFLUENCE_API_URL = f"{JIRA_API_URL}/wiki"
 
-DOCUMENTS_CACHE_PATH = "./docs_bot_2.pkl"
+SUFFIX_PATH = "bot2"
+DOCUMENTS_CACHE_PATH = f"./docs_{SUFFIX_PATH}.pkl"
 
 
 def get_one_pager_documents_ids_in_confluence() -> List[str]:
@@ -103,8 +104,8 @@ def load_documents() -> List[Document]:
 
 
 def get_vector_db() -> Chroma:
-    chroma_path = ".vector.bot"
-    store_path = LocalFileStore(".store.bot")
+    chroma_path = f".vector.{SUFFIX_PATH}"
+    store_path = LocalFileStore(f".store.{SUFFIX_PATH}")
 
     # embeddings = OllamaEmbeddings(model="mxbai-embed-large")
     embeddings = OllamaEmbeddings(model="bge-m3")
@@ -154,7 +155,11 @@ def get_retriever() -> EnsembleRetriever:
 
 
 def main():
-    llm = ChatOllama(model="llama3.1", temparature=0)
+    llm = ChatOllama(
+        # model="llama3.1",
+        model="benedict/linkbricks-llama3.1-korean:8b",
+        temparature=0,
+    )
     # llm = ChatGroq(
     #     model="llama-3.1-70b-versatile",
     #     temperature=0,
@@ -170,14 +175,12 @@ def main():
                 "system",
                 """
     # Instruction:
-    당신은 핏펫 회사 직원들을 위한 내부 문서와 정책을 잘 이해하고 있는 도우미 입니다. 
-    
-    주어진 질문에 대해 정확하고 상세한 답변을 해주는 역할을 가지고 있습니다. 다음 지침을 따라 답변해주세요:
-    - 반드시 Documents들을 기반으로 질문에 대해서 답변을 해야합니다.
+    당신은 핏펫 회사 직원들을 위한 내부 문서와 정책 정보에 대해서 주어진 질문에 정확하고 상세한 답변을 해주세요. 다음 지침을 따라 답변해주세요:
+    - **반드시 Documents들을 기반으로 질문에 대해서 답변을 해야합니다.**
+    - **모르는 정보라면 `모르는 정보 입니다.`라고 답변 해주세요.** 
     - 전체 내용을 50단어 이내로 요약한 '요약' 필드를 작성해 주세요.
     - 핵심 내용들을 간결하게 정리해서 '키 포인트' 필드에 작성해 주세요.
-    - metadata 정보에 대한 `출처` 필드를 작성해 주세요.
-    - 만약 모르는 정보라면 `모르는 정보 입니다.`라고 답변 해주세요. 
+    - 정보를 확인한 출처를 `출처` 필드를 작성해 주세요.
     - 모든 답변은 한글이어야 합니다.
     - 요약은 객관적이고 중립성을 유지해주세요.
     
@@ -189,8 +192,9 @@ def main():
       - "핵심 포인트 3"
       ...
     출처:
-      - "URL of Document"
-      - "URL of Document"
+      - "출처 1"
+      - "출처 2"
+      - ...
      
     # Documents: 
     {documents_context}""".strip(),

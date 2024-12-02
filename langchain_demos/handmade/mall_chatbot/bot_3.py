@@ -58,7 +58,11 @@ def load_documents() -> List[Document]:
 
 
 def main():
-    llm = ChatOllama(model="llama3.1", temparature=0)
+    llm = ChatOllama(
+        # model="llama3.1",
+        model="benedict/linkbricks-llama3.1-korean:8b",
+        temparature=0,
+    )
     # llm = ChatGroq(
     #     model="llama-3.1-70b-versatile",
     #     temperature=0,
@@ -69,74 +73,35 @@ def main():
 
     prompt = ChatPromptTemplate.from_template(
         """
-    # **Prompt Template: Clarifying Missing Information in PRD or Policies**
-
-    ## **System Context**
-    You are a backend developer analyzing a product requirement document (PRD) and policy documentation. Your goal is to identify unclear areas, missing details, or potential edge cases before starting development. Use the provided input to generate a list of clarifying questions.
+    # Instruction:
+    당신은 회사 직원들을 위한 내부 문서와 정책을 잘 이해하고 있는 도우미 입니다. 
     
-    ---
+    주어진 질문에 대해 정확하고 상세한 답변을 해주는 역할을 가지고 있습니다. 다음 지침을 따라 답변해주세요:
+    - 반드시 Documents들을 기반으로 질문에 대해서 답변을 해야합니다.
+    - 전체 내용을 50단어 이내로 요약한 '요약' 필드를 작성해 주세요.
+    - 핵심 내용들을 간결하게 정리해서 '키 포인트' 필드에 작성해 주세요.
+    - 만약 모르는 정보라면 `모르는 정보 입니다.`라고 답변 해주세요. 
+    - 모든 답변은 한글이어야 합니다.
+    - 요약은 객관적이고 중립성을 유지해주세요.
     
-    ## **Prompt Input Format**
-    1. **Feature Description:**  
-       A high-level description of the feature or functionality.
-    
-    2. **User Stories:**  
-       Key user flows or stories provided in the PRD.
-    
-    3. **Policies:**  
-       Specific rules or guidelines governing the functionality.
-    
-    4. **Known Constraints:**  
-       Any technical or business constraints mentioned.
-    
-    ---
-    
-    ## **Expected Output Format**
-    - Clarifying questions about **business goals**.  
-    - Missing details about **functional requirements**.  
-    - Potential **edge cases** or scenarios not covered in the documentation.  
-    - **Dependencies** or integration details needing confirmation.
-    
-    ---
-    
-    ## **Prompt Example**
-    > You are a backend engineer preparing to implement a feature described as:  
-    > - **Feature Description:** A shopping cart notification system that alerts users when their cart contains items about to sell out or go on discount.  
-    > - **User Stories:** "As a user, I want to receive real-time notifications when an item in my cart has a price drop."  
-    > - **Policies:** Notifications should only be sent between 9 AM and 9 PM in the user’s timezone.  
-    > - **Known Constraints:** The system must handle up to 100,000 concurrent notifications.
-    
-    Generate questions to ensure all functional and technical aspects are clear.
-    
-    ---
-    
-    ## **Sample Output**
-    ### **1. Business Goals**  
-    - What is the primary purpose of this feature: increasing conversion rates, reducing abandoned carts, or improving user experience?
-    
-    ### **2. Functional Requirements**  
-    - Should notifications for price drops and stock levels be sent via email, push notifications, or both?  
-    - How frequently should stock-level checks be performed (e.g., real-time, hourly)?
-    
-    ### **3. Edge Cases**  
-    - What happens if a user's timezone cannot be determined?  
-    - How should notifications behave for users who have disabled notifications in their settings?
-    
-    ### **4. Dependencies**  
-    - Does the notification system need to integrate with an existing messaging service, or should it be built independently?  
-    - Are there specific third-party APIs or data sources to use for stock and pricing information?
-    
-    ---
-
-    # **Document_context** 
-    {document_context}""".strip(),
+    응답은 반드시 아래 형식을 따라 주세요:
+    요약: "전체 내용 요약 (50단어 이내)"
+    키 포인트:
+      - "핵심 포인트 1" 
+      - "핵심 포인트 2"
+      - "핵심 포인트 3"
+      ...
+     
+    # Documents: 
+    {document_context}
+    """.strip(),
     )
-    translate_prompt = ChatPromptTemplate.from_template("Translate '{text_to_translate}' to Korean.")
+    # translate_prompt = ChatPromptTemplate.from_template("Translate '{text_to_translate}' to Korean.")
 
     analyze_chain = prompt | llm | StrOutputParser()
-    translate_chain = {"text_to_translate": analyze_chain} | translate_prompt | llm | StrOutputParser()
+    # translate_chain = {"text_to_translate": analyze_chain} | translate_prompt | llm | StrOutputParser()
 
-    for token in translate_chain.stream({"document_context": load_documents()[0].page_content}):
+    for token in analyze_chain.stream({"document_context": load_documents()[0].page_content}):
         print(token, end="", flush=True)
 
     # while True:
