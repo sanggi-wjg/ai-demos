@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable
 
 
-def caching(filepath: str):
+def cacheable(filepath: str):
 
     def decorator(func: Callable):
 

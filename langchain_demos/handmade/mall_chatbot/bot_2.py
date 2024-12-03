@@ -13,12 +13,10 @@ from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.vectorstores import VectorStoreRetriever
-from langchain_groq import ChatGroq
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from langchain_demos.utils.decorators import caching
+from langchain_demos.utils.decorators import cacheable
 from langchain_demos.utils.dev import green
 
 load_dotenv()
@@ -75,7 +73,7 @@ def get_one_pager_documents_ids_in_confluence() -> List[str]:
     ]
 
 
-@caching(DOCUMENTS_CACHE_PATH)
+@cacheable(DOCUMENTS_CACHE_PATH)
 def load_documents() -> List[Document]:
     recursive_text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=500,
