@@ -1,23 +1,20 @@
 import functools
-import pickle
-from pathlib import Path
-from typing import Callable
+from typing import Callable, Type
+
+from langchain_demos.utils.cache_loader import LocalCacheLoader, CacheLoader
 
 
-def cacheable(filepath: str):
+def cacheable(key: str, loader: Type[CacheLoader] = LocalCacheLoader):
 
     def decorator(func: Callable):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            path = Path(filepath)
+            cache_loader = loader(key)
+            if cache_loader.is_cached():
+                return cache_loader.read()
 
-            if path.exists():
-                with open(path, 'rb') as file:
-                    return pickle.load(file)
-
-            with open(path, 'wb') as file:
-                pickle.dump(result := func(*args, **kwargs), file)
+            cache_loader.write(result := func(*args, **kwargs))
             return result
 
         return wrapper

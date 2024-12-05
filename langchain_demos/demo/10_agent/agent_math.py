@@ -11,7 +11,7 @@ from langchain_ollama import ChatOllama
 
 @tool
 def basic_calculator_tool(query):
-    """Basic calculator tool"""
+    """Basic calculator tool, If you want to calculate something, you can use this tool."""
     try:
         return f"The result is {eval(query)}"
     except (SyntaxError, NameError) as e:

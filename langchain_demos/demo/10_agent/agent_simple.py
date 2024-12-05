@@ -28,5 +28,5 @@ agent = initialize_agent(
     verbose=True,
 )
 
-resp = agent.invoke({"input": "Fitpet의 회사 주소 정보 알려줘"})
+resp = agent.invoke({"input": "2024년 대한민국 정부 에산에 대해서 알려줘"})
 print(resp)

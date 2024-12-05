@@ -110,8 +110,8 @@ Human: {input}
 AI:"""
 prompt = PromptTemplate(input_variables=["history", "input"], template=template)
 
-# llm = ChatOllama(model="llama3.1", temperature=0)
-llm = ChatOllama(model="phi3:medium", temperature=0)
+llm = ChatOllama(model="llama3.1", temperature=0)
+# llm = ChatOllama(model="phi3:medium", temperature=0)
 chain = ConversationChain(llm=llm, memory=memory, prompt=prompt)
 
 # set_debug(True)
