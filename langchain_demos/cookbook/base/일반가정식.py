@@ -4,6 +4,7 @@ from typing import List
 import bs4
 from dotenv import load_dotenv
 from langchain.embeddings import CacheBackedEmbeddings
+from langchain.globals import set_debug
 from langchain.retrievers import EnsembleRetriever
 from langchain.storage import LocalFileStore
 from langchain_chroma import Chroma
@@ -17,7 +18,7 @@ from langchain_groq import ChatGroq
 from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from langchain_demos.utils.cache_loader import LocalCacheLoader
+from langchain_demos.utils.cache_loader import LocalCacheLoader, RedisCacheLoader
 from langchain_demos.utils.decorators import cacheable
 from langchain_demos.utils.dev import green
 
@@ -26,13 +27,14 @@ CHROMA_PATH = ".vector.coupdeta"
 STORE_PATH = ".store.coupdeta"
 
 load_dotenv()
+# set_debug(True)
 
 
-@cacheable(DOCUMENT_CACHE_PATH, loader=LocalCacheLoader)
+@cacheable(DOCUMENT_CACHE_PATH, loader=RedisCacheLoader)
 def load_documents() -> List[Document]:
     recursive_text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=100,
-        chunk_overlap=30,
+        chunk_size=200,
+        chunk_overlap=0,
         length_function=len,
         is_separator_regex=False,
         separators=["\n\n"],
@@ -136,9 +138,10 @@ def app_main():
 
 # Response Format:
 "전체 내용 요약 (50단어 이내)"
-- "핵심 내용 1 (20단어 이내)"
-- "핵심 내용 2 (20단어 이내)"
-- "핵심 내용 3 (20단어 이내)"
+- "핵심 내용 1 (20단어 이내)" (source)
+- "핵심 내용 2 (20단어 이내)" (source)
+- "핵심 내용 3 (20단어 이내)" (source)
+- "핵심 내용 ..." "(source)"
 - ...
     """.strip(),
             ),
