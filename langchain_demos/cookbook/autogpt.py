@@ -43,7 +43,5 @@ agent = AutoGPT.from_llm_and_tools(
 )
 agent.chain.verbose = False
 agent.run(
-    [
-        "What were the winning boston marathon times for the past 5 years (ending in 2022)? Generate a table of the year, name, country of origin, and times."
-    ]
+    ["국가별 월드컵 우승 횟수를 csv 파일로 생성해줘"],
 )

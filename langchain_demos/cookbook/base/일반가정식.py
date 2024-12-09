@@ -30,7 +30,7 @@ load_dotenv()
 # set_debug(True)
 
 
-@cacheable(DOCUMENT_CACHE_PATH, loader=RedisCacheLoader)
+@cacheable(DOCUMENT_CACHE_PATH, cache_loader=RedisCacheLoader)
 def load_documents() -> List[Document]:
     recursive_text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=200,
