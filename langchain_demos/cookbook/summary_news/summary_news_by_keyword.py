@@ -1,7 +1,6 @@
+import logging
 import os
 from typing import List
-
-import logging
 
 import bs4
 from dotenv import load_dotenv
@@ -20,9 +19,7 @@ from langchain_core.vectorstores import VectorStore
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from langchain_demos.cookbook.naver_openapi_client import NaverOpenAPIClient
-from langchain_demos.utils.cache_loader import RedisCacheLoader
-from langchain_demos.utils.decorators import cacheable
+from langchain_demos.cookbook.summary_news.naver_openapi_client import NaverOpenAPIClient
 
 load_dotenv()
 set_debug(True)
@@ -32,7 +29,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
 
-@cacheable(cache_loader=RedisCacheLoader)
+# @cacheable(cache_loader=RedisCacheLoader)
 def get_news_urls_by_keyword(
     keyword: str,
     display: int = 10,
@@ -50,7 +47,6 @@ def get_news_urls_by_keyword(
         start=start,
         sort=sort,
     )
-    urls = list(filter(lambda x: "https://n.news.naver.com" in x, urls))
     logger.debug(urls)
     return urls
 
@@ -58,30 +54,32 @@ def get_news_urls_by_keyword(
 def load_documents(urls: List[str]) -> List[Document]:
     logger.debug("load_documents...")
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=200,
+        chunk_size=100,
         chunk_overlap=0,
         add_start_index=True,
         length_function=len,
         is_separator_regex=False,
         separators=["\n", "\n\n"],
     )
-    loader = WebBaseLoader(
-        web_paths=urls,
+    naver_news_loader = WebBaseLoader(
+        web_paths=list(filter(lambda x: "https://n.news.naver.com" in x, urls)),
         bs_kwargs=dict(
             parse_only=bs4.SoupStrainer("div", attrs={"id": ["newsct_article"]}),
         ),
     )
+    another_news_loader = WebBaseLoader(
+        web_paths=list(filter(lambda x: "https://n.news.naver.com" not in x, urls)),
+    )
 
-    # def escape_content(text: str) -> str:
-    #     return text.strip().replace("\t", "")
+    def escape_content(text: str) -> str:
+        return text.strip().replace("\t", "").replace("\n", "")
 
-    # documents = []
-    # for doc in loader.load():
-    #     doc.page_content = escape_content(doc.page_content)
-    #     documents.append(doc)
+    documents = []
+    for doc in naver_news_loader.load() + another_news_loader.load():
+        doc.page_content = escape_content(doc.page_content)
+        documents.append(doc)
 
-    # return text_splitter.split_documents(documents)
-    return loader.load_and_split(text_splitter)
+    return text_splitter.split_documents(documents)
 
 
 def create_vector_db(documents: List[Document]) -> Chroma:
@@ -107,18 +105,12 @@ def create_retriever(vector_db: VectorStore, documents: List[Document]) -> Ensem
     bm25_retriever = BM25Retriever.from_documents(
         documents=documents,
         search_kwargs={
-            "k": 10,
+            "k": 5,
         },
     )
     vector_retriever = vector_db.as_retriever(
-        search_type="similarity_score_threshold",
-        search_kwargs={
-            "k": 10,
-            # "fetch_k": 20,  # MMR 초기 후보군 크기
-            # "lambda_mult": 0.8,  # 다양성, 관련성 사이의 균형 조정 (0.5-0.8 범위 추천)
-            "score_threshold": 0.8,  # 유사도 점수가 0.8 이상인 문서만 반환
-            # "filter": {"metadata_field": "desired_value"},  # 메타 데이터 기반 필터링
-        },
+        search_type="mmr",
+        search_kwargs={"k": 5},
     )
     return EnsembleRetriever(
         retrievers=[bm25_retriever, vector_retriever],
@@ -144,8 +136,8 @@ def create_prompt_for_news() -> ChatPromptTemplate:
 {articles}
 
 # 응답은 반드시 아래 형식을 따라 주세요:
-요약: 전체 내용 요약 (50단어 이내)
-내용: 전체 내용 요약 (200단어 이내) 
+요약: 전체 내용에 대한 주제 (50단어 이내)
+내용: 내용 요약 (200단어 이내) 
 핵심 내용:
 - 핵심 내용 1 (30단어 이내) (source)
 - 핵심 내용 2 (30단어 이내) (source)
@@ -169,19 +161,14 @@ def app_main():
     retriever = create_retriever(vector_db, documents)
 
     llm = ChatOllama(
-        model="llama3.1",
+        # model="llama3.1",
+        model="exaone3.5:7.8b",
         # model="benedict/linkbricks-llama3.1-korean:8b",
         temparature=0,
     )
     prompt = create_prompt_for_news()
-    # chain = (
-    #     {"articles": retriever | flatten_documents, "question": RunnablePassthrough()}
-    #     | prompt
-    #     | llm
-    #     | StrOutputParser()
-    # )
+    # chain = {"articles": retriever | flatten_documents, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
     chain = {"articles": retriever, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
-
     while True:
         user_input = input("\n뉴스 질문: ")
         for token in chain.stream(user_input):

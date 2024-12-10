@@ -235,7 +235,8 @@ def app_main():
 
     llm = ChatOllama(
         # model="llama3.1",
-        model="benedict/linkbricks-llama3.1-korean:8b",
+        model="exaone3.5:7.8b",
+        # model="benedict/linkbricks-llama3.1-korean:8b",
         temparature=0,
     )
     prompt = create_prompt()
