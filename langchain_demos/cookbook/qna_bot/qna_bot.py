@@ -24,6 +24,7 @@ class DocumentMetadataCategoryEnum(enum.Enum):
     ETC = "ETC"
 
 
+@st.cache_data
 def load_documents() -> List[Document]:
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=200,
