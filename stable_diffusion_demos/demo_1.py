@@ -31,7 +31,8 @@ pipe = pipe.to("mps")  # cuda
 # prompt = "A hamster holding a sign that reads Hello World"
 # prompt = "happy retriever with smile in the snow"
 # prompt = """"Cat's Table", A cartoon in the style of John Tenniel, Punch magazine, 1890"""
-prompt = "Marylin monroe full-body shot detailed background in a 50th ambiente in a diner"
+# prompt = "Marylin monroe full-body shot detailed background in a 50th ambiente in a diner"
+prompt = "An imaginative scene of a small white hamster enthusiastically running on a large hamster wheel, generating electricity to power a rack of servers in a server room. Environment is lit with a soft glow from the servers. The servers emit a soft light, The floor is covered in wood shavings."
 
 image = pipe(
     prompt,
