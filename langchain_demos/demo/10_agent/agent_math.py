@@ -60,7 +60,7 @@ def create_math_agent():
     message_history = ChatMessageHistory()
     tools = [basic_calculator_tool, equation_solver_tool, factorial_calculator_tool]
 
-    llm = ChatOllama(model="llama3.1", temparature=0)
+    llm = ChatOllama(model="exaone3.5:7.8b", temparature=0, format="json")
 
     agent = create_react_agent(llm, tools, prompt)
     agent_executor = AgentExecutor(

@@ -1,9 +1,12 @@
 from typing import List
 
+from langchain.globals import set_debug
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 from pydantic import BaseModel, Field
+
+set_debug(True)
 
 
 class ResponseOutput(BaseModel):
@@ -19,8 +22,8 @@ prompt = ChatPromptTemplate.from_template(
 
 llm = ChatOllama(
     # model="llama3.1",
-    # model="exaone3.5:7.8b",
-    model="benedict/linkbricks-llama3.1-korean:8b",
+    model="exaone3.5:7.8b",
+    # model="benedict/linkbricks-llama3.1-korean:8b",
 ).with_structured_output(ResponseOutput)
 
 chain = prompt | llm

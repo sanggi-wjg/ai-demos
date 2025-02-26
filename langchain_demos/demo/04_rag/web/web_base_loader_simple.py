@@ -4,7 +4,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 
-llama = ChatOllama(model="llama3.1", temparature=0)
+llama = ChatOllama(model="deepseek-r1:14b", temparature=0)
 
 
 def naver_news():

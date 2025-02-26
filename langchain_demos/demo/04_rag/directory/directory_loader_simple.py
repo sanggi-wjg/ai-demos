@@ -5,11 +5,11 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableWithMessageHistory
 
-loader = DirectoryLoader(path="../data", glob="*.sql")
+loader = DirectoryLoader(path="../../../data", glob="*.sql")
 extract = loader.load()
 content = "\n".join([e.page_content for e in extract])
 
-llama = ChatOllama(model="llama3.1", temparature=0.7)
+llama = ChatOllama(model="exaone3.5:7.8b", temparature=0.7)
 prompt = ChatPromptTemplate.from_messages(
     [
         (
