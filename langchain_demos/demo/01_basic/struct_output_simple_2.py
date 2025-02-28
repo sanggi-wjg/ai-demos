@@ -22,7 +22,7 @@ prompt = ChatPromptTemplate.from_template(
 
 llm = ChatOllama(
     # model="llama3.1",
-    model="exaone3.5:7.8b",
+    model="raynor",
     # model="benedict/linkbricks-llama3.1-korean:8b",
 ).with_structured_output(ResponseOutput)
 
