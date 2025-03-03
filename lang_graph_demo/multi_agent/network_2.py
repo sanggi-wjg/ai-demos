@@ -1,42 +1,48 @@
-from typing import Annotated, Literal
+from typing import Literal
 
 from dotenv import load_dotenv
-from langchain.agents import create_react_agent
+from langchain.agents import create_react_agent, AgentExecutor
 from langchain_community.tools import TavilySearchResults
-from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain_core.prompts import PromptTemplate
-from langchain_core.tools import tool
+from langchain_core.tools import Tool
 from langchain_experimental.utilities import PythonREPL
-from langchain_ollama import ChatOllama
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.constants import END, START
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.types import Command
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
-
-repl = PythonREPL()
-
-"""
-pip install -U langchain_community langchain_anthropic langchain_experimental matplotlib langgraph
-"""
+search_tool = TavilySearchResults(max_results=3)
+repl = PythonREPL()  # pip install -U matplotlib
 
 
-@tool
-def python_repl_tool(
-    code: Annotated[str, "The python code to execute to generate your chart."],
-):
-    """Use this to execute python code. If you want to see the output of a value,
-    you should print it out with `print(...)`. This is visible to the user."""
-    try:
-        result = repl.run(code)
-    except BaseException as e:
-        return f"Failed to execute. Error: {repr(e)}"
-    result_str = f"Successfully executed: {code}\nStdout: {result}"
-    return result_str + "\n\nIf you have completed all tasks, respond with FINAL ANSWER."
+# @tool
+# def python_repl_tool(
+#     code: Annotated[str, "The python code to execute to generate your chart."],
+# ):
+#     """Use this to execute python code. If you want to see the output of a value,
+#     you should print it out with `print(...)`. This is visible to the user."""
+#     try:
+#         result = repl.run(code)
+#     except BaseException as e:
+#         return f"Failed to execute. Error: {repr(e)}"
+#     result_str = f"Successfully executed: {code}\nStdout: {result}"
+#     return result_str + "\n\nIf you have completed all tasks, respond with FINAL ANSWER."
+
+python_repl_tool = Tool(
+    name="python_repl",
+    description=(
+        "A Python shell. Use this to execute python commands. Input should be a valid python command. "
+        "If you want to see the output of a value, you should print it out with `print(...)`."
+    ),
+    func=repl.run,
+)
 
 
-def make_prompt(suffix: str) -> str:
+def make_system_prompt(suffix: str) -> str:
     return (
         "You are a helpful AI assistant, collaborating with other assistants."
         " Use the provided tools to progress towards answering the question."
@@ -48,10 +54,8 @@ def make_prompt(suffix: str) -> str:
     )
 
 
-def make_prompt_2(role: str) -> str:
-    return (
-        role
-        + """
+def make_prompt() -> str:
+    return """
 You have access to the following tools: 
 
 {tools}
@@ -70,52 +74,59 @@ Final Answer: the final answer to the original input question
 Begin!
 
 Question: {input}
-Thought:{agent_scratchpad}
-    """.strip()
+Thought:{agent_scratchpad}""".strip()
+
+
+# llm = ChatOllama(model="qwen2.5:32b-instruct-q4_0")
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+
+research_prompt = PromptTemplate.from_template(
+    make_system_prompt("You can only do research. You are working with a chart generator colleague.") + make_prompt()
+)
+chart_prompt = PromptTemplate.from_template(
+    make_system_prompt("You can only generate charts. You are working with a researcher colleague.") + make_prompt()
+)
+
+research_agent = AgentExecutor(
+    agent=create_react_agent(llm, [search_tool, python_repl_tool], research_prompt),
+    tools=[search_tool],
+    verbose=True,
+    handle_parsing_errors=True,
+)
+chart_agent = AgentExecutor(
+    agent=create_react_agent(llm, [python_repl_tool], chart_prompt),
+    tools=[python_repl_tool],
+    verbose=True,
+    handle_parsing_errors=True,
+)
+
+
+# def router(last_message: str, goto: str):
+#     if "Final Answer" in last_message:
+#         return END
+#     return goto
+
+
+def research_node(state: MessagesState) -> Command[Literal["chart"]]:
+    chat_response = research_agent.invoke({"input": state["messages"][-1].content})
+    breakpoint()
+    output = chat_response["output"]
+    return Command(
+        goto="chart",
+        update={"messages": state["messages"] + [HumanMessage(content=output, name="research")]},
     )
 
 
-def router(last_message: BaseMessage, goto: str):
-    if "FINAL ANSWER" in last_message.content:
-        # Any agent decided the work is done
-        return END
-    return goto
+def chart_node(state: MessagesState) -> Command[Literal[END]]:
+    breakpoint()
+    chat_response = chart_agent.invoke({"input": state})
+    breakpoint()
+    output = chat_response["output"]
 
-
-search_tool = TavilySearchResults(max_results=3)
-
-llm = ChatOllama(model="qwen2.5:14b-instruct-q8_0")
-research_agent = create_react_agent(
-    llm,
-    tools=[search_tool],
-    prompt=PromptTemplate.from_template(
-        make_prompt_2("You can only do research. You are working with a chart generator colleague.")
-    ),
-)
-
-chart_agent = create_react_agent(
-    llm,
-    tools=[python_repl_tool],
-    prompt=PromptTemplate.from_template(
-        make_prompt_2("You can only generate charts. You are working with a researcher colleague.")
-    ),
-)
-
-
-def research_node(state: MessagesState) -> Command[Literal["chart", END]]:
-    chat_response = research_agent.invoke(state)
-    goto = router(chat_response, "chart")
-
-    chat_response["messages"][-1] = HumanMessage(content=chat_response.content, name="research")
-    return Command(update={"messages": chat_response["messages"]}, goto=goto)
-
-
-def chart_node(state: MessagesState) -> Command[Literal["research", END]]:
-    chat_response = chart_agent.invoke(state)
-    goto = router(chat_response, "research")
-
-    chat_response["messages"][-1] = HumanMessage(content=chat_response.content, name="chart")
-    return Command(update={"messages": chat_response["messages"]}, goto=goto)
+    return Command(
+        goto=END,
+        update={"messages": state["messages"] + [HumanMessage(content=output, name="chart")]},
+    )
 
 
 workflow = StateGraph(MessagesState)
@@ -137,8 +148,8 @@ events = graph.stream(
             )
         ],
     },
-    {"recursion_limit": 10},
+    {"recursion_limit": 5},
 )
-for s in events:
-    print(s)
-    print("----")
+for event in events:
+    for name, e in event.items():
+        e["messages"][-1].pretty_print()

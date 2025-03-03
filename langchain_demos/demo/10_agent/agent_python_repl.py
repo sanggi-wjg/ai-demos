@@ -4,6 +4,7 @@ from langchain_community.tools import TavilySearchResults
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import Tool
 from langchain_experimental.utilities import PythonREPL
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama import ChatOllama
 
 load_dotenv()
@@ -15,15 +16,12 @@ repl_tool = Tool(
     func=repl.run,
 )
 
-
 search = TavilySearchResults(k=5)
 search_tool = Tool(
     name="search_web",
     func=search.invoke,
     description="Use this to search web. You can get additional information.",
 )
-
-
 tools = [repl_tool, search_tool]
 
 template = """Answer the following questions as best you can. You have access to the following tools.
@@ -44,7 +42,7 @@ template = """Answer the following questions as best you can. You have access to
     질문: {input}
     생각: {agent_scratchpad}"""
 prompt = PromptTemplate.from_template(template)
-llm = ChatOllama(model="llama3.1", temparature=0)
+llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite")
 
 agent = create_react_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(
@@ -54,5 +52,5 @@ agent_executor = AgentExecutor(
     handle_parsing_errors=True,
 )
 
-res = agent_executor.invoke({"input": input("유저 입력:")})
-print(res)
+chat_response = agent_executor.invoke({"input": input("유저 입력: ")})
+print(chat_response)
